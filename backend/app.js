@@ -19,6 +19,14 @@ app.use("/api/service", serviceRoutes);
 const staffRoutes = require("./routes/staff.routes");
 app.use("/api/staff", staffRoutes);
 
+const bookingRoutes = require("./routes/booking.routes");
+app.use("/api/booking", bookingRoutes);
+
+const reviewRoutes = require("./routes/review.routes")
+app.use("/api/review", reviewRoutes);
+
+const dashboardRoutes = require("./routes/dashboard.routes")
+app.use("/api/dashboard", dashboardRoutes);
 
 app.get("/", (req, res) => {
   res.send("API Running...");

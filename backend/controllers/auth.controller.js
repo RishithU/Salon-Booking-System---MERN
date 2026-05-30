@@ -5,6 +5,7 @@ const generateToken = require("../utils/token");
 
 exports.signup = async (req, res) => {
   try {
+    console.log("Signup hit")
     const { name, username, email, password, role } = req.body;
 
     // Minimal validation (keep this)
@@ -34,10 +35,11 @@ exports.signup = async (req, res) => {
       password: hashedPassword,
       role
     });
-
+    console.log(user)
     res.status(201).send(user);
 
   } catch (error) {
+    console.log(error)
     res.status(500).send(error.message);
   }
 };
@@ -77,5 +79,24 @@ exports.login = async (req, res) => {
 
   } catch (error) {
     res.status(500).send(err.message);
+  }
+};
+
+exports.logout = async (req, res) => {
+
+  try {
+
+    return res.status(200).json({
+      success: true,
+      message: "Logout successful",
+    });
+
+  } catch (error) {
+
+    return res.status(500).json({
+      success: false,
+      message: "Logout failed",
+      error: error.message,
+    });
   }
 };

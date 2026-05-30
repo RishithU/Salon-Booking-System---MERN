@@ -25,6 +25,7 @@ exports.createService = async (req, res) => {
       });
     }
 
+
     const shopId = shop._id;
 
     //  3. Prevent duplicate service in same shop
@@ -57,7 +58,7 @@ exports.createService = async (req, res) => {
 
   } catch (error) {
 
-    // 🔥 Handle unique index error (backup safety)
+    //  Handle unique index error (backup safety)
     if (error.code === 11000) {
       return res.status(400).json({
         message: "Service already exists"
@@ -69,4 +70,143 @@ exports.createService = async (req, res) => {
       error: error.message
     });
   }
+};
+
+
+exports.getOwnerServices = async (request, response) => {
+  try {
+
+    // Logged-in owner id
+    const ownerId = request.user.id;
+
+
+    // Find owner's shop
+    const shop = await Shop.findOne({ owner: ownerId });
+
+    // If shop does not exist
+    if (!shop) {
+      return response.status(404).json({
+        success: false,
+        message: "Shop not found",
+      });
+    }
+    
+    // Find all services belonging to this shop
+    const services = await Service.find({
+      shopId: shop._id,
+    })
+      
+   // console.log(services)
+    return response.status(200).json({
+      success: true,
+      count: services.length,
+      services,
+    });
+
+  } catch (error) {
+
+    console.log(error);
+
+    return response.status(500).json({
+      success: false,
+      message: "Failed to fetch owner services",
+      error: error.message,
+    });
+  }
+};
+
+
+exports.searchServices = async (req, res) => {
+
+  try {
+
+    // GET SEARCH QUERY
+
+    const { query } = req.query;
+
+    // VALIDATION
+
+    if (!query) {
+      return res.status(400).json({
+        message: "Search query is required"
+      });
+    }
+
+    // FIND SERVICES
+
+    const services = await Service.find({
+
+      name: {
+        $regex: query,
+        $options: "i"
+      }
+
+    })
+
+    // POPULATE SHOP DETAILS
+
+    .populate("shopId", "name");
+
+    // SEND RESPONSE
+
+    res.status(200).json(services);
+
+  }
+
+  catch (error) {
+
+    console.log(error);
+
+    res.status(500).json({
+      message: "Server Error"
+    });
+
+  }
+
+};
+
+
+exports.getServiceDetails =async (req, res) => {
+
+  try {
+
+    // GET SERVICE ID
+
+    const { serviceId } = req.params;
+
+    // FIND SERVICE
+
+    const service =
+    await Service.findById(serviceId)
+
+      .populate(
+        "shopId"
+      );
+
+    // NOT FOUND
+
+    if (!service) {
+
+      return res.status(404).json({
+        message: "Service not found"
+      });
+
+    }
+
+    // RESPONSE
+
+    res.status(200).json(service);
+
+  }
+
+  catch (error) {
+
+    console.log(error);
+
+    res.status(500).json({
+      message: "Server Error"
+    });
+
+  }
+
 };

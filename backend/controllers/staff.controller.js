@@ -14,12 +14,12 @@ exports.addStaff = async (req, res) => {
         message: "Name, services and working hours are required"
       });
     }
-
+    console.dir(req.user)
     // 2. Find shop using ownerId
     const shop = await Shop.findOne({
       ownerId: req.user.userId
     });
-
+    
     if (!shop) {
       return res.status(404).json({
         message: "Shop not found for this owner"

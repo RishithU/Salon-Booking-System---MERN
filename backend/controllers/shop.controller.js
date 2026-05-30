@@ -4,6 +4,7 @@ const Shop = require("../models/shop.model");
 
 exports.createShop = async (req, res) => {
   try {
+    console.log(req.body);
     const { name, location } = req.body;
 
     // IMPORTANT: One owner → One shop (your rule)
@@ -31,5 +32,38 @@ exports.createShop = async (req, res) => {
 
   } catch (error) {
     res.status(500).send({ error: error.message });
+  }
+};
+
+const getDashboardAggregation=require("../utils/dashboard.utils")
+
+exports.getOwnerDashboardBookings = async (req, res) => {
+  try {
+    const { shopId } = req.params;
+
+    const shop = await Shop.findOne({
+      _id: shopId,
+      ownerId: req.user._id
+    });
+
+    if (!shop) {
+      return res.status(403).json({
+        message: "Unauthorized or shop not found"
+      });
+    }
+
+    const data = await getDashboardAggregation.getDashboardData(shopId);
+
+    res.json({
+      success: true,
+      count: data.length,
+      data
+    });
+
+  } catch (err) {
+    res.status(500).json({
+      success: false,
+      message: err.message
+    });
   }
 };

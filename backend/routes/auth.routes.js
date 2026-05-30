@@ -9,6 +9,19 @@ router.post("/signup", authController.signup);
 // Login
 router.post("/login", authController.login);
 
+// Logout
+/*
+IMPORTANT CONCEPT:
+  Right now logout is mostly symbolic.
+
+  REAL logout happens here:
+
+  localStorage.removeItem("token");
+
+  because JWT is stored client-side.
+*/
+router.post("/logout",authController.logout)
+
 //TEST AUTH MIDDLEWARE - TEMPORARY
 const { protect, authorize } = require("../middlewares/auth.middleware");
 

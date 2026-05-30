@@ -1,0 +1,7 @@
+To do 
+	Review add --- when booking completed customer can add a review
+      Viw Analytics -- Owner 
+        --- Bookings data - totall, Booking status 
+        --- Customer Insights
+
+Deployment ??  
