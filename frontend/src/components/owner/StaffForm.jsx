@@ -1,13 +1,11 @@
 
-
-
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { createStaff } from "../../api/addstaff";
+import { getOwnerServices } from "../../api/Services";
 
 const StaffForm = () => {
-
     const navigate = useNavigate();
 
     const [formData, setFormData] = useState({
@@ -22,13 +20,29 @@ const StaffForm = () => {
         isActive: true
     });
 
-    const [serviceInput, setServiceInput] = useState("");
-
+    const [ownerServices, setOwnerServices] = useState([]);
+    const [servicesLoading, setServicesLoading] = useState(true);
+    const [servicesError, setServicesError] = useState("");
     const [loading, setLoading] = useState(false);
 
-    // NORMAL INPUTS
-    const handleChange = (e) => {
+    useEffect(() => {
+        const fetchOwnerServices = async () => {
+            try {
+                setServicesLoading(true);
+                const data = await getOwnerServices();
+                setOwnerServices(Array.isArray(data) ? data : []);
+            } catch (error) {
+                console.error(error);
+                setServicesError("Failed to load services");
+            } finally {
+                setServicesLoading(false);
+            }
+        };
 
+        fetchOwnerServices();
+    }, []);
+
+    const handleChange = (e) => {
         const { name, value } = e.target;
 
         setFormData((prev) => ({
@@ -37,9 +51,7 @@ const StaffForm = () => {
         }));
     };
 
-    // WORKING HOURS
     const handleWorkingHoursChange = (e) => {
-
         const { name, value } = e.target;
 
         setFormData((prev) => ({
@@ -51,69 +63,54 @@ const StaffForm = () => {
         }));
     };
 
-    // ADD SERVICES
-    const handleAddService = () => {
-
-        if (!serviceInput.trim()) return;
-
+    const handleServiceToggle = (serviceId) => {
         setFormData((prev) => ({
             ...prev,
-            services: [...prev.services, serviceInput]
+            services: prev.services.includes(serviceId)
+                ? prev.services.filter((id) => id !== serviceId)
+                : [...prev.services, serviceId]
         }));
-
-        setServiceInput("");
     };
 
-    
-
-    // SUBMIT
     const handleSubmit = async (e) => {
-
         e.preventDefault();
 
-        try {
+        if (formData.services.length === 0) {
+            alert("Please select at least one service");
+            return;
+        }
 
+        try {
             setLoading(true);
 
             const response = await createStaff(formData);
 
-            console.log(response);
-
             alert("Staff Added Successfully");
 
             navigate("/owner/staff");
-
         } catch (error) {
-
             console.log(error);
 
             alert(
                 error?.response?.data?.message ||
                 "Failed to add staff"
             );
-
         } finally {
-
             setLoading(false);
         }
     };
 
     return (
-
         <div className="min-h-screen bg-gray-100 flex justify-center items-center p-6">
-
             <form
                 onSubmit={handleSubmit}
                 className="bg-white shadow-lg rounded-2xl p-8 w-full max-w-2xl"
             >
-
                 <h2 className="text-3xl font-bold mb-8">
                     Add Staff
                 </h2>
 
-                {/* NAME */}
                 <div className="mb-5">
-
                     <label className="block mb-2 font-medium">
                         Name
                     </label>
@@ -127,12 +124,9 @@ const StaffForm = () => {
                         className="w-full border p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
                         required
                     />
-
                 </div>
 
-                {/* EMAIL */}
                 <div className="mb-5">
-
                     <label className="block mb-2 font-medium">
                         Email
                     </label>
@@ -145,12 +139,9 @@ const StaffForm = () => {
                         placeholder="Enter email"
                         className="w-full border p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
                     />
-
                 </div>
 
-                {/* PHONE */}
                 <div className="mb-5">
-
                     <label className="block mb-2 font-medium">
                         Phone
                     </label>
@@ -163,70 +154,47 @@ const StaffForm = () => {
                         placeholder="Enter 10-digit phone number"
                         className="w-full border p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
                     />
-
                 </div>
 
-                {/* SERVICES */}
                 <div className="mb-5">
-
                     <label className="block mb-2 font-medium">
                         Services
                     </label>
 
-                    <div className="flex gap-3">
-
-                        <input
-                            type="text"
-                            value={serviceInput}
-                            onChange={(e) => setServiceInput(e.target.value)}
-                            placeholder="Enter Service ID"
-                            className="flex-1 border p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-                        />
-
-                        <button
-                            type="button"
-                            onClick={handleAddService}
-                            className="bg-black text-white px-5 rounded-lg"
-                        >
-                            Add
-                        </button>
-
-                    </div>
-
-                    {/* SERVICE TAGS */}
-                    <div className="flex flex-wrap gap-2 mt-4">
-
-                        {
-                            formData.services.map((service, index) => (
-
-                                <div
-                                    key={index}
-                                    className="bg-gray-200 px-3 py-2 rounded-lg flex items-center gap-2"
+                    {servicesLoading ? (
+                        <p className="text-sm text-gray-500">Loading services...</p>
+                    ) : servicesError ? (
+                        <p className="text-sm text-red-500">{servicesError}</p>
+                    ) : ownerServices.length === 0 ? (
+                        <p className="text-sm text-gray-500">
+                            No services are available for your shop yet.
+                        </p>
+                    ) : (
+                        <div className="border rounded-lg p-4 space-y-2">
+                            {ownerServices.map((service) => (
+                                <label
+                                    key={service._id}
+                                    className="flex items-center gap-3 cursor-pointer"
                                 >
+                                    <input
+                                        type="checkbox"
+                                        checked={formData.services.includes(service._id)}
+                                        onChange={() => handleServiceToggle(service._id)}
+                                        className="h-4 w-4 rounded border-gray-300"
+                                    />
+                                    <span className="text-gray-700">{service.name}</span>
+                                </label>
+                            ))}
+                        </div>
+                    )}
 
-                                    <span>{service}</span>
-
-                                    <button
-                                        type="button"
-                                        onClick={() => handleRemoveService(index)}
-                                        className="text-red-500 font-bold"
-                                    >
-                                        ×
-                                    </button>
-
-                                </div>
-                            ))
-                        }
-
-                    </div>
-
+                    <p className="text-sm text-gray-500 mt-2">
+                        Select the services this staff member can handle.
+                    </p>
                 </div>
 
-                {/* WORKING HOURS */}
                 <div className="grid grid-cols-2 gap-5 mb-6">
-
                     <div>
-
                         <label className="block mb-2 font-medium">
                             Start Hour
                         </label>
@@ -242,11 +210,9 @@ const StaffForm = () => {
                             className="w-full border p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
                             required
                         />
-
                     </div>
 
                     <div>
-
                         <label className="block mb-2 font-medium">
                             End Hour
                         </label>
@@ -262,14 +228,10 @@ const StaffForm = () => {
                             className="w-full border p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
                             required
                         />
-
                     </div>
-
                 </div>
 
-                {/* ACTIVE STATUS */}
                 <div className="mb-6 flex items-center gap-3">
-
                     <input
                         type="checkbox"
                         checked={formData.isActive}
@@ -284,28 +246,19 @@ const StaffForm = () => {
                     <label className="font-medium">
                         Staff Active
                     </label>
-
                 </div>
 
-                {/* SUBMIT BUTTON */}
                 <button
                     type="submit"
                     disabled={loading}
                     className="w-full bg-black text-white py-3 rounded-lg hover:bg-gray-800 transition"
                 >
-                    {
-                        loading
-                            ? "Adding Staff..."
-                            : "Add Staff"
-                    }
+                    {loading ? "Adding Staff..." : "Add Staff"}
                 </button>
-
             </form>
-
         </div>
     );
 };
 
 export default StaffForm;
-
 

@@ -77,11 +77,11 @@ exports.getOwnerServices = async (request, response) => {
   try {
 
     // Logged-in owner id
-    const ownerId = request.user.id;
+    const ownerId = request.user.userId;
 
 
     // Find owner's shop
-    const shop = await Shop.findOne({ owner: ownerId });
+    const shop = await Shop.findOne({ ownerId });
 
     // If shop does not exist
     if (!shop) {

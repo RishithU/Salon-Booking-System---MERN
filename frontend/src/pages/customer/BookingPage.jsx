@@ -181,7 +181,7 @@ const BookingPage = () => {
           Shop:
           {" "}
 
-          {service.shop?.name}
+          {service.shopId?.name || service.shop?.name || "Unknown shop"}
 
         </p>
 
